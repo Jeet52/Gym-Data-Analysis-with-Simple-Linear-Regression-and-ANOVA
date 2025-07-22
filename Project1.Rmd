@@ -1,0 +1,176 @@
+
+---
+title: "Project 1"
+author: "Author: Jeet Patel"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Task 1: 
+
+##### Question 1 
+The correct usage of `abline` to add a vertical line is `abline(v = 2)`, **not** `abline(x = 2)`.
+
+##### Question 2 
+I am going to knit to an HTML file. To convert it to a PDF, I will open the HTML file in the browser, print it, and save it as a PDF.
+
+##### Question 3 
+The difference between a `.pdf` file and an `.rmd` file is that `.rmd` is a script-like document containing R code and markdown, whereas a PDF is the final output document that is not easily editable.
+
+```{r}
+library(dplyr)
+library(readr)
+library(tidyr)
+library(moments)
+```
+
+---
+
+### Task 2: Converting Workout_Type, Experience_Level, and Gender to Factors
+
+```{r}
+gym_data <- read.csv("gym.csv")
+
+gym_data$Workout_Type <- as.factor(gym_data$Workout_Type)
+gym_data$Experience_Level <- factor(gym_data$Experience_Level, levels = c(1, 2, 3), ordered = TRUE)
+gym_data$Gender <- as.factor(gym_data$Gender)
+
+summary(gym_data)
+```
+
+---
+
+### Task 3: Summarize and Describe Avg_BPM
+
+```{r}
+summary(gym_data$Avg_BPM)
+
+# Count NAs
+sum(is.na(gym_data$Avg_BPM))
+
+# Histogram and Boxplot
+par(mfrow = c(1,2))
+hist(gym_data$Avg_BPM, main = "Histogram of Avg BPM", xlab = "Avg BPM", col = "lightblue", border = "navy")
+boxplot(gym_data$Avg_BPM, main = "Boxplot of Avg BPM", col = "lightgreen")
+
+# Descriptive Statistics
+mean(gym_data$Avg_BPM, na.rm = TRUE)
+median(gym_data$Avg_BPM, na.rm = TRUE)
+sd(gym_data$Avg_BPM, na.rm = TRUE)
+```
+
+##### Interpretation:  
+The average BPM ranges approximately from 120 to 169. The histogram is fairly evenly distributed, and the boxplot shows no major outliers. The median (143) and mean (143.8) are close, indicating a roughly symmetric distribution. The standard deviation (14.35) suggests some variability in the data.
+
+---
+
+### Task 4: Summarize and Describe Workout_Type
+
+```{r}
+# Frequency Table
+table(gym_data$Workout_Type)
+
+# Barplot
+barplot(table(gym_data$Workout_Type), main = "Workout_Type", col = "yellow", xlab = "Workout_Type", ylab = "Count")
+```
+
+##### Interpretation:  
+Strength and Cardio are the most common workout types (255 and 258 counts), with Yoga and HIIT slightly less common. The barplot confirms that while all types are fairly represented, Cardio and Strength have noticeably higher counts.
+
+---
+
+### Task 5: Workout_Type Varying by Experience_Level
+
+```{r}
+# Barplot by Experience Level
+barplot(table(gym_data$Experience_Level, gym_data$Workout_Type), beside = TRUE, col = "purple", main = "Workout Type by Experience Level", xlab = "Experience Level", ylab = "Count")
+
+# Proportional Table
+workout_table <- prop.table(table(gym_data$Experience_Level, gym_data$Workout_Type))
+workout_table
+```
+
+##### Interpretation:  
+The workout type distribution is similar across experience levels. For example, beginners have roughly 11.2% Cardio, 8.7% HIIT, 9.9% Strength, and 8.7% Yoga, suggesting no strong variation by experience.
+
+---
+
+### Task 6: Normality Test for Calories_Burned
+
+```{r}
+# Histogram and Q-Q Plot
+par(mfrow = c(1,2))
+hist(gym_data$Calories_Burned, main = "Histogram of Calories Burned", xlab = "Calories Burned", col = "pink")
+qqnorm(gym_data$Calories_Burned)
+qqline(gym_data$Calories_Burned, col = "red")
+
+# Skewness and Kurtosis
+skewness(gym_data$Calories_Burned)
+kurtosis(gym_data$Calories_Burned)
+
+# Shapiro-Wilk Test
+shapiro.test(gym_data$Calories_Burned)
+```
+
+##### Analysis:  
+Graphical diagnostics (histogram, Q-Q plot) suggest approximate normality. Skewness (0.278) and kurtosis (2.94) are close to values expected under normality. However, the Shapiro-Wilk test rejects normality (p < 0.01), indicating some deviation from a perfect normal distribution. Due to this, parametric analyses should be interpreted with caution.
+
+---
+
+### Task 7: BMI Class and Water Intake
+
+```{r}
+gym_data$bmi_class <- cut(gym_data$BMI,
+                          breaks = c(-Inf, 18.5, 25, 30, Inf),
+                          labels = c("Underweight", "Healthy", "Overweight", "Obese"),
+                          ordered_result = TRUE)
+
+# Boxplot: Water Intake by BMI Class
+boxplot(Water_Intake ~ bmi_class, data = gym_data, main = "Water Intake by BMI", xlab = "BMI Class", ylab = "Water Intake", col = "orange")
+
+# Summary Statistics
+aggregate(Water_Intake ~ bmi_class, data = gym_data, FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+```
+
+##### Analysis:  
+Water intake tends to increase as BMI class increases. Obese individuals show the highest average water intake, with the boxplot and summary statistics supporting this trend.
+
+---
+
+### Task 8: Hypothesis Test on Calories_Burned (Mean > 890)
+
+```{r}
+test_Calorie <- t.test(gym_data$Calories_Burned, mu = 890, alternative = "greater", conf.level = 0.98)
+test_Calorie
+```
+
+##### Conclusion:  
+Since the p-value (0.03898) is greater than the significance level (0.02), we fail to reject the null hypothesis that mean calories burned is ≤ 890. There is insufficient evidence to conclude the mean calories burned is greater than 890.
+
+---
+
+### Task 9: Hypothesis Test on Session_Duration by Gender
+
+```{r}
+# Normality tests by Gender
+shapiro.test(gym_data$Session_Duration[gym_data$Gender == 1])
+shapiro.test(gym_data$Session_Duration[gym_data$Gender == 0])
+
+# Independent t-test
+test_Session <- t.test(Session_Duration ~ Gender, data = gym_data, var.equal = TRUE, conf.level = 0.97)
+test_Session
+```
+
+##### Conclusion:  
+The p-value (0.7039) is greater than the significance level (0.03), so we fail to reject the null hypothesis of no difference in session duration between genders.
+
+---
+
+### Session Info
+
+```{r}
+sessionInfo()
+```
