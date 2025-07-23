@@ -27,20 +27,16 @@ This project analyzes a dataset of gym members to understand how workout habits 
 
 ## Repository Structure
 
-stat382-project2-gym-analysis/
+project1-fitness-tracking/
 ├── data/
-│ └── gym2.csv # Raw dataset
-│
+│ └── fitness_data.csv # Raw dataset
 ├── figures/
-│ └── (exported plots, e.g., residuals_plot.png, anova_barplot.png)
-│
+│ └── histogram_age.png # Sample plot
 ├── report/
-│ ├── Gym_Data_Analysis.Rmd # Complete analysis with code and narrative
-│ └── Gym_Data_Analysis.html # Knit output for viewing results online
-│
-├── README.md # Project summary and instructions
+│ ├── Fitness_Tracking_Analysis.Rmd # R Markdown source file with code and narrative
+│ └── Fitness_Tracking_Analysis.html # Knit output for easy viewing
+├── README.md # Project summary and usage instructions
 └── LICENSE # Optional license file
-
 
 ---
 
