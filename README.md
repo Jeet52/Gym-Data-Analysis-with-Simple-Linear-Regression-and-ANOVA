@@ -25,20 +25,6 @@ This project analyzes a dataset of gym members to understand how workout habits 
 
 ---
 
-## Repository Structure
-
-project1-fitness-tracking/
-├── data/
-│ └── fitness_data.csv # Raw dataset
-├── figures/
-│ └── histogram_age.png # Sample plot
-├── report/
-│ ├── Fitness_Tracking_Analysis.Rmd # R Markdown source file with code and narrative
-│ └── Fitness_Tracking_Analysis.html # Knit output for easy viewing
-├── README.md # Project summary and usage instructions
-└── LICENSE # Optional license file
-
----
 
 ## Key Findings
 
