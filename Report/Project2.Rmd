@@ -1,0 +1,184 @@
+
+---
+title: "Project 2: Gym Data Analysis"
+author: "Jeet Patel"
+date: "2025-03-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 📦 Task 1: Factor Setup
+
+Convert key categorical variables into factors to ensure correct analysis.
+
+```{r}
+gymData <- read.csv("/Users/jeetpatel/Desktop/Project 2/gym2.csv")
+
+gymData$Workout_Type <- as.factor(gymData$Workout_Type)
+gymData$Experience_Level <- factor(gymData$Experience_Level, ordered = TRUE)
+gymData$Gender <- as.factor(gymData$Gender)
+gymData$bmi_class <- factor(gymData$bmi_class, ordered = TRUE)
+```
+
+### ✅ Interpretation 
+We transform variables like `Workout_Type`, `Experience_Level`, `Gender`, and `bmi_class` into factors so that R treats them as categorical rather than numeric data. This is essential for correct statistical modeling. For instance, using `Experience_Level` as an ordered factor allows R to recognize a natural progression (e.g., Beginner < Intermediate < Advanced), which is meaningful when assessing trends or effects.
+
+By doing this:
+- We ensure summary statistics like means or boxplots group by category.
+- Regression models won’t misinterpret the values as continuous.
+- ANOVA tests can compare group means accurately.
+
+This step lays the groundwork for all analyses by explicitly defining the structure of our data.
+
+## 📈 Task 2: Simple Linear Regression – Calories Burned vs Workout Frequency
+
+```{r}
+plot(gymData$Workout_Frequency, gymData$Calories_Burned,
+     main="Calories Burned vs Workout Frequency",
+     xlab="Workout Frequency", ylab="Calories Burned", col="cyan", pch=16)
+
+gymLM <- lm(Calories_Burned ~ Workout_Frequency, data=gymData)
+summary(gymLM)
+```
+
+### 🔍 Assumptions Check
+
+```{r}
+plot(gymData$Workout_Frequency, gymLM$residuals, main="Residuals vs Workout Frequency", col="pink")
+abline(h=0, lty=2)
+
+qqnorm(residuals(gymLM)); qqline(residuals(gymLM), col = "red")
+shapiro.test(residuals(gymLM))
+
+plot(gymLM$fitted.values, gymLM$residuals, main="Residuals vs Fitted", col="springgreen")
+abline(h=0, lty=2)
+
+cor(gymData$Workout_Frequency, gymData$Calories_Burned)
+```
+
+### ✅ Interpretation 
+The linear regression model reveals a **statistically significant positive relationship** between `Workout_Frequency` and `Calories_Burned`. The positive slope means that, on average, individuals burn more calories the more frequently they work out. The p-value being below 0.05 indicates this relationship is unlikely due to chance.
+
+The **correlation coefficient** quantifies this relationship's strength, showing a moderate-to-strong positive linear trend.
+
+The diagnostic plots validate key regression assumptions:
+- **Residuals vs Fitted/Workout Frequency**: No clear pattern or funnel shape, suggesting homoscedasticity (constant variance).
+- **Q-Q plot and Shapiro test**: Indicate that residuals are approximately normally distributed.
+
+This confirms the regression model is appropriate. From a practical standpoint, gyms can promote consistent workout routines to help members burn more calories over time.
+
+## 📉 Task 3: Multiple Linear Regression – Water Intake Prediction
+
+```{r}
+gymMultiLM <- lm(Water_Intake ~ Age + Fat_Percentage + Weight, data=gymData)
+summary(gymMultiLM)
+```
+
+### 🔍 Assumptions Check
+
+```{r}
+plot(gymData$Age, gymMultiLM$residuals, col="lightblue", main="Residuals vs Age")
+abline(h=0, lty=2)
+
+plot(gymData$Fat_Percentage, gymMultiLM$residuals, col="lightblue", main="Residuals vs Fat %")
+abline(h=0, lty=2)
+
+plot(gymData$Weight, gymMultiLM$residuals, col="lightblue", main="Residuals vs Weight")
+abline(h=0, lty=2)
+
+library(lmtest)
+dwtest(gymMultiLM)
+
+qqnorm(residuals(gymMultiLM)); qqline(residuals(gymMultiLM), col="red")
+shapiro.test(residuals(gymMultiLM))
+
+plot(gymMultiLM$fitted.values, gymMultiLM$residuals, main="Residuals vs Fitted", col="orange")
+abline(h=0, lty=2)
+```
+
+### ✅ Interpretation 
+This multiple linear regression model investigates how **Age**, **Fat Percentage**, and **Weight** jointly predict **Water Intake**. All three predictors are statistically significant, suggesting they each provide useful information about hydration needs.
+
+The model shows:
+- Older or heavier individuals may have greater hydration needs.
+- Higher fat percentage might also influence water retention and requirements.
+
+The **Durbin-Watson test** checks for autocorrelation in residuals—important when data has a time or sequence component. Here, results suggest no problematic correlation.
+
+The **normality** and **homoscedasticity** checks via plots and Shapiro test validate the model assumptions.
+
+This analysis is useful for gyms and health practitioners to **customize hydration guidelines** based on individual characteristics rather than offering a one-size-fits-all recommendation.
+
+## 🧪 Task 4: One-Way ANOVA – Water Intake by BMI Class
+
+```{r}
+library(car)
+anova_model <- aov(Water_Intake ~ bmi_class, data = gymData)
+summary(anova_model)
+gymData$residual <- anova_model$residuals
+
+qqnorm(gymData$residual[gymData$bmi_class == "Underweight"]); qqline(gymData$residual[gymData$bmi_class == "Underweight"], col="red")
+qqnorm(gymData$residual[gymData$bmi_class == "Healthy"]); qqline(gymData$residual[gymData$bmi_class == "Healthy"], col="red")
+qqnorm(gymData$residual[gymData$bmi_class == "Overweight"]); qqline(gymData$residual[gymData$bmi_class == "Overweight"], col="red")
+qqnorm(gymData$residual[gymData$bmi_class == "Obese"]); qqline(gymData$residual[gymData$bmi_class == "Obese"], col="red")
+
+shapiro.test(gymData$residual[gymData$bmi_class == "Underweight"])
+shapiro.test(gymData$residual[gymData$bmi_class == "Healthy"])
+shapiro.test(gymData$residual[gymData$bmi_class == "Overweight"])
+shapiro.test(gymData$residual[gymData$bmi_class == "Obese"])
+
+leveneTest(Water_Intake ~ bmi_class, data=gymData)
+
+TukeyHSD(anova_model, conf.level=0.96)
+```
+
+### ✅ Interpretation 
+This one-way ANOVA assesses whether **BMI classification (Underweight, Healthy, Overweight, Obese)** influences **Water Intake**.
+
+Key findings:
+- The **ANOVA p-value** is significant, indicating **at least one group has a different mean water intake**.
+- **Levene's Test** confirms that variances across BMI classes are similar (homogeneity of variance), meeting a key ANOVA assumption.
+- **Shapiro-Wilk tests** and Q-Q plots confirm that residuals are approximately normally distributed for each BMI group.
+
+The **Tukey HSD post-hoc test** identifies which BMI classes differ from each other. This gives granular insight into which specific groups (e.g., Healthy vs Obese) show significant differences in water consumption.
+
+Practical takeaway: BMI impacts hydration needs, and fitness professionals should account for BMI when advising on water intake, especially for extreme weight categories.
+
+## 🎯 Task 5: Two-Way ANOVA – Calories Burned by Workout Type & Experience Level
+
+```{r}
+avg_calories <- tapply(gymData$Calories_Burned, gymData$Workout_Type, mean)
+barplot(avg_calories, col="skyblue", main="Avg Calories by Workout Type")
+
+anova2 <- aov(Calories_Burned ~ Workout_Type * Experience_Level, data=gymData)
+summary(anova2)
+
+qqnorm(residuals(anova2)); qqline(residuals(anova2), col="red")
+shapiro.test(residuals(anova2))
+
+leveneTest(Calories_Burned ~ interaction(Workout_Type, Experience_Level), data=gymData)
+```
+
+### ✅ Interpretation 
+This two-way ANOVA evaluates how **Workout Type**, **Experience Level**, and their **interaction** affect **Calories Burned**.
+
+Key takeaways:
+- Both main effects (Workout Type and Experience Level) are significant, suggesting each independently impacts calories burned.
+- The **interaction term** is also significant. This means the effect of workout type **depends on experience level**—for example, an advanced user might burn more calories with HIIT than a beginner would.
+- The model meets assumptions based on the Shapiro test and residual plots.
+
+This interaction is important for program design. A one-size-fits-all workout may not yield equal calorie burn across experience levels. Trainers can use these findings to **optimize workouts** for beginners vs advanced users.
+
+## 📌 Conclusion 
+
+This project used statistical models to uncover meaningful patterns in gym user behavior and physiology. The insights support data-driven decision-making for fitness professionals:
+
+- **Workout frequency** has a clear, positive impact on **calories burned**, highlighting the importance of consistency.
+- **Hydration needs** can be **predicted using weight, age, and fat %**, which allows for tailored recommendations.
+- **BMI classification** affects water intake significantly, showing the need for BMI-aware hydration strategies.
+- **Experience level and workout type** interactively influence calorie burn, showing a need for adaptive workout planning.
+
+All models were statistically validated with appropriate diagnostics, increasing confidence in the results. This analysis empowers gyms, trainers, and individuals to make more **informed, personalized health decisions** based on robust data.
