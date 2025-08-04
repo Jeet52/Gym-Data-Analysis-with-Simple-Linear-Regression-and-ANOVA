@@ -1,5 +1,3 @@
-Here’s the full README content:
-
 # Gym Data Analysis (STAT 382 – Project 2)
 
 **Author:** Jeet Patel  
